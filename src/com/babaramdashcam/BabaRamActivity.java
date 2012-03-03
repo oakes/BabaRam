@@ -6,7 +6,7 @@ import android.widget.FrameLayout;
 import java.lang.Exception;
 
 public class BabaRamActivity extends Activity {
-	private CameraPreview mPreview;
+	private BabaRamCamera mCamera;
 	private FrameLayout mLayout;
 
     @Override
@@ -20,9 +20,9 @@ public class BabaRamActivity extends Activity {
 		super.onResume();
 
 		try {
-			mPreview = new CameraPreview(this, 0);
+			mCamera = new BabaRamCamera(this, 0);
 			mLayout = (FrameLayout) findViewById(R.id.camera_preview);
-			mLayout.addView(mPreview);
+			mLayout.addView(mCamera);
 		}
 		catch (Exception e) {}
 	}

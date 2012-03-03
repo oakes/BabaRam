@@ -9,16 +9,16 @@ import android.hardware.Camera;
 import android.util.Log;
 import java.lang.Exception;
 
-public class CameraPreview extends SurfaceView
+public class BabaRamCamera extends SurfaceView
 	implements SurfaceHolder.Callback
 {
-	private static final String TAG = "CameraPreview";
+	private static final String TAG = "BabaRamCamera";
 	private Camera mCamera;
 	private Activity mAct;
 	private int mCameraId;
 	private SurfaceHolder mHolder;
 
-	public CameraPreview(Context context, int id) {
+	public BabaRamCamera(Context context, int id) {
 		super(context);
 
 		mAct = (Activity) context;
