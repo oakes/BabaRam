@@ -8,62 +8,67 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.util.Log;
 import java.lang.Exception;
-import java.io.IOException;
 
 public class CameraPreview extends SurfaceView
 	implements SurfaceHolder.Callback
 {
-	public static final String TAG = "CameraPreview";
+	private static final String TAG = "CameraPreview";
+	private Camera mCamera;
 	private Activity mAct;
-    private Camera mCamera;
 	private int mCameraId;
-    private SurfaceHolder mHolder;
+	private SurfaceHolder mHolder;
 
-    public CameraPreview(Context context, Camera camera, int id) {
-        super(context);
+	public CameraPreview(Context context, int id) {
+		super(context);
 
 		mAct = (Activity) context;
-        mCamera = camera;
 		mCameraId = id;
 
-        mHolder = getHolder();
-        mHolder.addCallback(this);
-        // deprecated setting, but required on Android versions prior to 3.0
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-    }
+		mHolder = getHolder();
+		mHolder.addCallback(this);
+		// deprecated setting, but required on Android versions prior to 3.0
+		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+	}
 
-    public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
-        } catch (IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
-        }
-    }
+	public void surfaceCreated(SurfaceHolder holder) {
+		try {
+			mCamera = Camera.open(mCameraId);
+			mCamera.setPreviewDisplay(holder);
+			mCamera.startPreview();
+		} catch (Exception e) {
+			Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+		}
+	}
 
-    public void surfaceDestroyed(SurfaceHolder holder) {
-    }
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		if (mCamera != null) {
+			mCamera.stopPreview();
+			mCamera.setPreviewCallback(null);
+			mCamera.release();
+			mCamera = null;
+		}
+	}
 
-    public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        if (mHolder.getSurface() == null) {
-          return;
-        }
+	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+		if (mHolder.getSurface() == null || mCamera == null) {
+			return;
+		}
 
-        // Stop preview and change orientation.
-        try {
-            mCamera.stopPreview();
-        } catch (Exception e) {}
+		// Stop preview and change orientation.
+		try {
+			mCamera.stopPreview();
+		} catch (Exception e) {}
 
 		setCameraDisplayOrientation();
 
-        // Start preview with new settings.
-        try {
-            mCamera.setPreviewDisplay(mHolder);
-            mCamera.startPreview();
-        } catch (Exception e) {
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
-        }
-    }
+		// Start preview with new settings.
+		try {
+			mCamera.setPreviewDisplay(mHolder);
+			mCamera.startPreview();
+		} catch (Exception e) {
+			Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+		}
+	}
 
 	private void setCameraDisplayOrientation() {
 		android.hardware.Camera.CameraInfo info =
