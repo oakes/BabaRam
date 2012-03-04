@@ -5,5 +5,7 @@
     <string name="audio">Audio</string>
     <string name="history">History</string>
     <string name="flip">Flip</string>
+    <string name="camera_error">Camera couldn\'t start</string>
+    <string name="restart">Camera was restarted</string>
 
 </resources>

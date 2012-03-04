@@ -10,6 +10,7 @@ import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -49,21 +50,28 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public void start() {
-		int degrees = getCameraDisplayOrientation();
-
 		if (mCamera == null) {
 			try {
 				mCamera = Camera.open(mCameraId);
 				mCamera.setPreviewDisplay(mHolder);
 				mCamera.startPreview();
-				mCamera.setDisplayOrientation(degrees);
+				mCamera.setDisplayOrientation(getCameraDisplayOrientation());
 				mCamera.unlock();
 			} catch (Exception e) {
 				Log.d(TAG, "Camera start: " + e.getMessage());
+				Toast.makeText(
+					mAct,
+					getResources().getString(R.string.camera_error),
+					Toast.LENGTH_SHORT
+				).show();
 				return;
 			}
 		}
 
+		startRecorder();
+	}
+
+	public void startRecorder() {
 		if (mRecorder == null) {
 			try {
 				mRecorder = new MediaRecorder();
@@ -78,7 +86,26 @@ public class BabaRamCamera extends SurfaceView
 				);
 				mRecorder.setOutputFile(getOutputMediaPath());
 				mRecorder.setPreviewDisplay(mHolder.getSurface());
-				mRecorder.setOrientationHint(degrees);
+				mRecorder.setOrientationHint(getCameraDisplayOrientation());
+				mRecorder.setMaxDuration(1800000);
+				mRecorder.setOnInfoListener(
+					new MediaRecorder.OnInfoListener() {
+						public void onInfo(MediaRecorder mr, int w, int ex) {
+							if (w == MediaRecorder.
+								MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
+							{
+								restart(false);
+							}
+						}
+					}
+				);
+				mRecorder.setOnErrorListener(
+					new MediaRecorder.OnErrorListener() {
+						public void onError(MediaRecorder mr, int w, int ex) {
+							restart(true);
+						}
+					}
+				);
 				mRecorder.prepare();
 				mRecorder.start();
 			} catch (Exception e) {
@@ -88,6 +115,18 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public void stop() {
+		stopRecorder();
+
+		if (mCamera != null) {
+			mCamera.lock();
+			mCamera.stopPreview();
+			mCamera.setPreviewCallback(null);
+			mCamera.release();
+			mCamera = null;
+		}
+	}
+
+	public void stopRecorder() {
 		if (mRecorder != null) {
 			try {
 				mRecorder.stop();
@@ -98,14 +137,17 @@ public class BabaRamCamera extends SurfaceView
 			}
 			mRecorder = null;
 		}
+	}
 
-		if (mCamera != null) {
-			mCamera.lock();
-			mCamera.stopPreview();
-			mCamera.setPreviewCallback(null);
-			mCamera.release();
-			mCamera = null;
-		}
+	public void restart(boolean forceOverwrite) {
+		stop();
+		start();
+
+		Toast.makeText(
+			mAct,
+			getResources().getString(R.string.restart),
+			Toast.LENGTH_SHORT
+		).show();
 	}
 
 	private int getCameraDisplayOrientation() {

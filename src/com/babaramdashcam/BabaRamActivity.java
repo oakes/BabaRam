@@ -21,4 +21,10 @@ public class BabaRamActivity extends Activity {
 		mLayout = (FrameLayout) findViewById(R.id.camera_preview);
 		mLayout.addView(mCamera);
 	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		mCamera.stop();
+	}
 }
