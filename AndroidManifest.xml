@@ -27,6 +27,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+		<activity
+            android:name=".BabaRamHistoryActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
     </application>
 
 </manifest>

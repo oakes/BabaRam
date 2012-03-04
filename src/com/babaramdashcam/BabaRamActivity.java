@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.FrameLayout;
 import android.widget.Button;
 import android.view.View;
+import android.content.Intent;
 
 public class BabaRamActivity extends Activity {
 	private BabaRamCamera mCamera;
@@ -24,6 +25,7 @@ public class BabaRamActivity extends Activity {
 		Button historyBtn = (Button) findViewById(R.id.history_button);
 		historyBtn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
+				goToHistory();
 			}
 		});
 		Button flipBtn = (Button) findViewById(R.id.flip_button);
@@ -33,4 +35,9 @@ public class BabaRamActivity extends Activity {
 			}
 		});
     }
+
+	public void goToHistory() {
+		Intent intent = new Intent(this, BabaRamHistoryActivity.class);
+		startActivity(intent);
+	}
 }
