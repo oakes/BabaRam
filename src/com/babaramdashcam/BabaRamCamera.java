@@ -55,7 +55,7 @@ public class BabaRamCamera extends SurfaceView
 				mCamera = Camera.open(mCameraId);
 				mCamera.setPreviewDisplay(mHolder);
 				mCamera.startPreview();
-				mCamera.setDisplayOrientation(getCameraDisplayOrientation());
+				mCamera.setDisplayOrientation(getCameraOrientation(true));
 				mCamera.unlock();
 			} catch (Exception e) {
 				Log.d(TAG, "Camera start: " + e.getMessage());
@@ -74,39 +74,46 @@ public class BabaRamCamera extends SurfaceView
 
 	public void startRecorder() {
 		if (mRecorder == null) {
+			// Initialize.
+			mRecorder = new MediaRecorder();
+			mRecorder.setCamera(mCamera);
+
+			// Set sources.
+			mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+			mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+			// Set profile.
+			mRecorder.setProfile(CamcorderProfile.get(
+				mCameraId,
+				CamcorderProfile.QUALITY_HIGH
+			));
+
+			// Set the rest of the properties.
+			mRecorder.setOrientationHint(getCameraOrientation(false));
+			mRecorder.setOutputFile(getOutputMediaPath());
+			mRecorder.setPreviewDisplay(mHolder.getSurface());
+			mRecorder.setMaxDuration(1200000);
+			mRecorder.setOnInfoListener(
+				new MediaRecorder.OnInfoListener() {
+					public void onInfo(MediaRecorder mr, int w, int ex) {
+						if (w == MediaRecorder.
+							MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
+						{
+							restart(false);
+						}
+					}
+				}
+			);
+			mRecorder.setOnErrorListener(
+				new MediaRecorder.OnErrorListener() {
+					public void onError(MediaRecorder mr, int w, int ex) {
+						restart(true);
+					}
+				}
+			);
+
+			// Begin recording.
 			try {
-				mRecorder = new MediaRecorder();
-				mRecorder.setCamera(mCamera);
-				mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-				mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-				mRecorder.setProfile(
-					CamcorderProfile.get(
-						mCameraId,
-						CamcorderProfile.QUALITY_HIGH
-					)
-				);
-				mRecorder.setOutputFile(getOutputMediaPath());
-				mRecorder.setPreviewDisplay(mHolder.getSurface());
-				mRecorder.setOrientationHint(getCameraDisplayOrientation());
-				mRecorder.setMaxDuration(1800000);
-				mRecorder.setOnInfoListener(
-					new MediaRecorder.OnInfoListener() {
-						public void onInfo(MediaRecorder mr, int w, int ex) {
-							if (w == MediaRecorder.
-								MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
-							{
-								restart(false);
-							}
-						}
-					}
-				);
-				mRecorder.setOnErrorListener(
-					new MediaRecorder.OnErrorListener() {
-						public void onError(MediaRecorder mr, int w, int ex) {
-							restart(true);
-						}
-					}
-				);
 				mRecorder.prepare();
 				mRecorder.start();
 			} catch (Exception e) {
@@ -152,7 +159,16 @@ public class BabaRamCamera extends SurfaceView
 		).show();
 	}
 
-	private int getCameraDisplayOrientation() {
+	public void flip() {
+		if (Camera.getNumberOfCameras() < 2)
+			return;
+
+		mCameraId = (mCameraId == 0) ? 1 : 0;
+		stop();
+		start();
+	}
+
+	private int getCameraOrientation(boolean display) {
 		android.hardware.Camera.CameraInfo info =
 			new android.hardware.Camera.CameraInfo();
 		android.hardware.Camera.getCameraInfo(mCameraId, info);
@@ -167,7 +183,7 @@ public class BabaRamCamera extends SurfaceView
 		}
 
 		int result;
-		if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+		if (display && info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 			result = (info.orientation + degrees) % 360;
 			result = (360 - result) % 360;
 		}

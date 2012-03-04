@@ -16,15 +16,13 @@
 		android:layout_width="fill_parent"
 		android:layout_gravity="bottom">
 	<Button
-        android:text="@string/audio"
-		android:layout_height="wrap_content"
-		android:layout_width="wrap_content" />
-	<Button
+		android:id="@+id/history_button"
 		android:text="@string/history"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
-		android:layout_centerInParent="true" />
+		android:layout_alignParentLeft="true" />
 	<Button
+		android:id="@+id/flip_button"
 		android:text="@string/flip"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
