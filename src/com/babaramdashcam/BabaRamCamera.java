@@ -183,7 +183,9 @@ public class BabaRamCamera extends SurfaceView
 		}
 
 		int result;
-		if (display && info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+		if ((display || degrees != 0) &&
+			info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT)
+		{
 			result = (info.orientation + degrees) % 360;
 			result = (360 - result) % 360;
 		}
