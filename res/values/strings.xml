@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, BabaRamActivity!</string>
     <string name="app_name">BabaRam</string>
+    <string name="audio">Audio</string>
+    <string name="history">History</string>
+    <string name="flip">Flip</string>
 
 </resources>

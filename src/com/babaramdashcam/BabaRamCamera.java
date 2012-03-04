@@ -6,14 +6,22 @@ import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 import android.content.Context;
 import android.hardware.Camera;
+import android.media.MediaRecorder;
+import android.media.CamcorderProfile;
+import android.os.Environment;
 import android.util.Log;
+
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.io.File;
 import java.lang.Exception;
 
 public class BabaRamCamera extends SurfaceView
 	implements SurfaceHolder.Callback
 {
 	private static final String TAG = "BabaRamCamera";
-	private Camera mCamera;
+	private Camera mCamera = null;
+	private MediaRecorder mRecorder = null;
 	private Activity mAct;
 	private int mCameraId;
 	private SurfaceHolder mHolder;
@@ -26,22 +34,73 @@ public class BabaRamCamera extends SurfaceView
 
 		mHolder = getHolder();
 		mHolder.addCallback(this);
-		// deprecated setting, but required on Android versions prior to 3.0
 		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-		try {
-			mCamera = Camera.open(mCameraId);
-			mCamera.setPreviewDisplay(holder);
-			mCamera.startPreview();
-		} catch (Exception e) {
-			Log.d(TAG, "Error setting camera preview: " + e.getMessage());
-		}
+		start();
 	}
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
+		stop();
+	}
+
+	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+	}
+
+	public void start() {
+		int degrees = getCameraDisplayOrientation();
+
+		if (mCamera == null) {
+			try {
+				mCamera = Camera.open(mCameraId);
+				mCamera.setPreviewDisplay(mHolder);
+				mCamera.startPreview();
+				mCamera.setDisplayOrientation(degrees);
+				mCamera.unlock();
+			} catch (Exception e) {
+				Log.d(TAG, "Camera start: " + e.getMessage());
+				return;
+			}
+		}
+
+		if (mRecorder == null) {
+			try {
+				mRecorder = new MediaRecorder();
+				mRecorder.setCamera(mCamera);
+				mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+				mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+				mRecorder.setProfile(
+					CamcorderProfile.get(
+						mCameraId,
+						CamcorderProfile.QUALITY_HIGH
+					)
+				);
+				mRecorder.setOutputFile(getOutputMediaPath());
+				mRecorder.setPreviewDisplay(mHolder.getSurface());
+				mRecorder.setOrientationHint(degrees);
+				mRecorder.prepare();
+				mRecorder.start();
+			} catch (Exception e) {
+				Log.d(TAG, "Recorder start: " + e.getMessage());
+			}
+		}
+	}
+
+	public void stop() {
+		if (mRecorder != null) {
+			try {
+				mRecorder.stop();
+				mRecorder.reset();
+				mRecorder.release();
+			} catch (Exception e) {
+				Log.d(TAG, "Recorder stop: " + e.getMessage());
+			}
+			mRecorder = null;
+		}
+
 		if (mCamera != null) {
+			mCamera.lock();
 			mCamera.stopPreview();
 			mCamera.setPreviewCallback(null);
 			mCamera.release();
@@ -49,28 +108,7 @@ public class BabaRamCamera extends SurfaceView
 		}
 	}
 
-	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-		if (mHolder.getSurface() == null || mCamera == null) {
-			return;
-		}
-
-		// Stop preview and change orientation.
-		try {
-			mCamera.stopPreview();
-		} catch (Exception e) {}
-
-		setCameraDisplayOrientation();
-
-		// Start preview with new settings.
-		try {
-			mCamera.setPreviewDisplay(mHolder);
-			mCamera.startPreview();
-		} catch (Exception e) {
-			Log.d(TAG, "Error starting camera preview: " + e.getMessage());
-		}
-	}
-
-	private void setCameraDisplayOrientation() {
+	private int getCameraDisplayOrientation() {
 		android.hardware.Camera.CameraInfo info =
 			new android.hardware.Camera.CameraInfo();
 		android.hardware.Camera.getCameraInfo(mCameraId, info);
@@ -92,6 +130,28 @@ public class BabaRamCamera extends SurfaceView
 		else {
 			result = (info.orientation - degrees + 360) % 360;
 		}
-		mCamera.setDisplayOrientation(result);
+
+		return result;
+	}
+
+	private String getOutputMediaPath() {
+		File mediaStorageDir = new File(
+			Environment.getExternalStorageDirectory(),
+			"BabaRam"
+		);
+
+		if (!mediaStorageDir.exists()) {
+			if (!mediaStorageDir.mkdirs()) {
+				return null;
+			}
+		}
+
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+			.format(new Date());
+		File mediaFile = new File(
+			mediaStorageDir.getPath() + File.separator + timeStamp + ".mp4"
+		);
+
+		return mediaFile.toString();
 	}
 }

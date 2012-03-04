@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:layout_height="fill_parent">
 
 	<FrameLayout
 		android:id="@+id/camera_preview"
@@ -16,16 +15,16 @@
 		android:layout_width="fill_parent"
 		android:layout_gravity="bottom">
 	<Button
-		android:text="Settings"
+        android:text="@string/audio"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content" />
 	<Button
-		android:text="Stop/Start"
+		android:text="@string/history"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:layout_centerInParent="true" />
 	<Button
-		android:text="Audio"
+		android:text="@string/flip"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:layout_alignParentRight="true" />

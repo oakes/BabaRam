@@ -3,7 +3,6 @@ package com.babaramdashcam;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.FrameLayout;
-import java.lang.Exception;
 
 public class BabaRamActivity extends Activity {
 	private BabaRamCamera mCamera;
@@ -18,12 +17,8 @@ public class BabaRamActivity extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-
-		try {
-			mCamera = new BabaRamCamera(this, 0);
-			mLayout = (FrameLayout) findViewById(R.id.camera_preview);
-			mLayout.addView(mCamera);
-		}
-		catch (Exception e) {}
+		mCamera = new BabaRamCamera(this, 0);
+		mLayout = (FrameLayout) findViewById(R.id.camera_preview);
+		mLayout.addView(mCamera);
 	}
 }
