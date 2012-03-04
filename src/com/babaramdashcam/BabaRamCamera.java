@@ -59,6 +59,7 @@ public class BabaRamCamera extends SurfaceView
 				mCamera.unlock();
 			} catch (Exception e) {
 				Log.d(TAG, "Camera start: " + e.getMessage());
+				stop();
 				Toast.makeText(
 					mAct,
 					getResources().getString(R.string.camera_error),
@@ -110,6 +111,7 @@ public class BabaRamCamera extends SurfaceView
 				mRecorder.start();
 			} catch (Exception e) {
 				Log.d(TAG, "Recorder start: " + e.getMessage());
+				stop();
 			}
 		}
 	}

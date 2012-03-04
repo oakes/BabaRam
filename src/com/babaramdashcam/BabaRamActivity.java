@@ -12,19 +12,8 @@ public class BabaRamActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-    }
-
-	@Override
-	public void onResume() {
-		super.onResume();
 		mCamera = new BabaRamCamera(this, 0);
 		mLayout = (FrameLayout) findViewById(R.id.camera_preview);
 		mLayout.addView(mCamera);
-	}
-
-	@Override
-	public void onPause() {
-		super.onPause();
-		mCamera.stop();
-	}
+    }
 }
