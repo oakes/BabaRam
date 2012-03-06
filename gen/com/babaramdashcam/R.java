@@ -27,6 +27,5 @@ public final class R {
         public static final int camera_error=0x7f040003;
         public static final int flip=0x7f040002;
         public static final int history=0x7f040001;
-        public static final int restart=0x7f040004;
     }
 }
