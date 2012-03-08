@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.io.File;
+import java.io.FileInputStream;
 import java.lang.Exception;
 
 public class BabaRamCamera extends SurfaceView
@@ -182,14 +183,19 @@ public class BabaRamCamera extends SurfaceView
 			long[] durations = new long[files.length];
 			long totalDuration = 0;
 			for (int i = 0; i < files.length; i++) {
-				MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-				mmr.setDataSource(files[i].toString());
-				String duration = mmr.extractMetadata(
-					MediaMetadataRetriever.METADATA_KEY_DURATION
-				);
+				try {
+					MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+					FileInputStream fis = new FileInputStream(files[i]);
+					mmr.setDataSource(fis.getFD());
+					String duration = mmr.extractMetadata(
+						MediaMetadataRetriever.METADATA_KEY_DURATION
+					);
 
-				durations[i] = Long.parseLong(duration);
-				totalDuration += Long.parseLong(duration);
+					durations[i] = Long.parseLong(duration);
+					totalDuration += Long.parseLong(duration);
+				} catch (Exception e) {
+					files[i].delete();
+				}
 			}
 
 			int deleteCount = 0;
