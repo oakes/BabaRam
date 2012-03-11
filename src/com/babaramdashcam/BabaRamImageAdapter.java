@@ -11,9 +11,11 @@ import android.media.ThumbnailUtils;
 import android.provider.MediaStore;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class BabaRamImageAdapter extends BaseAdapter {
 	private Context mContext;
+	private ArrayList<Bitmap> thumbs = new ArrayList<Bitmap>();
 
 	public BabaRamImageAdapter(Context c) {
 		mContext = c;
@@ -35,20 +37,23 @@ public class BabaRamImageAdapter extends BaseAdapter {
 		ImageView imageView;
 		if (convertView == null) {
 			imageView = new ImageView(mContext);
-			imageView.setLayoutParams(new GridView.LayoutParams(128, 128));
+			imageView.setLayoutParams(new GridView.LayoutParams(200, 200));
 			imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-			imageView.setPadding(8, 8, 8, 8);
+			imageView.setPadding(2, 2, 2, 2);
 		} else {
 			imageView = (ImageView) convertView;
 		}
 
 		try {
-			File file = BabaRamCamera.getFiles(false)[position];
-			Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
-				file.toString(), MediaStore.Video.Thumbnails.MICRO_KIND
-			);
-			if (bitmap != null) {
-				imageView.setImageBitmap(bitmap);
+			if (thumbs.size() < position + 1) {
+				File file = BabaRamCamera.getFiles(false)[position];
+				Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
+					file.toString(), MediaStore.Video.Thumbnails.MICRO_KIND
+				);
+				thumbs.add(bitmap);
+			}
+			if (thumbs.get(position) != null) {
+				imageView.setImageBitmap(thumbs.get(position));
 			}
 		} catch (Exception e) {}
 
