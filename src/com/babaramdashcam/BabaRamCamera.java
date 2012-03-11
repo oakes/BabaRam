@@ -6,16 +6,12 @@ import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 import android.content.Context;
 import android.hardware.Camera;
+import android.os.Environment;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
-import android.media.ThumbnailUtils;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.provider.MediaStore;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -23,14 +19,12 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.lang.Exception;
 
 public class BabaRamCamera extends SurfaceView
 	implements SurfaceHolder.Callback
 {
 	private static final String TAG = "BabaRamCamera";
-	private static final String JPG = ".jpg";
 	private static final String MP4 = ".mp4";
 	private static final int MAXDURATION = 1200000;
 	private static final int MAXHISTORY = 3600000;
@@ -176,54 +170,36 @@ public class BabaRamCamera extends SurfaceView
 		start();
 	}
 
-	public static void saveThumbnail(File file) {
-		File output = getThumbnailFile(file);
-		if (output == null) {
-			return;
+	public static File[] getFiles(boolean isAscending) {
+		File[] files = getOutputDir().listFiles();
+		if (isAscending) {
+			Arrays.sort(files, new Comparator<File>(){
+				public int compare(File f1, File f2) {
+					return Long.valueOf(f1.lastModified())
+							.compareTo(f2.lastModified());
+				}
+			});
 		}
-
-		Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
-			file.toString(),
-			MediaStore.Video.Thumbnails.MINI_KIND
-		);
-
-		try {
-			FileOutputStream out = new FileOutputStream(output);
-			bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-			out.flush();
-			out.close();
-		} catch (Exception e) {}
-	}
-
-	public static Bitmap readThumbnail(File file) {
-		Bitmap bitmap = null;
-		try {
-			FileInputStream fis = new FileInputStream(file);
-			bitmap = BitmapFactory.decodeFileDescriptor(fis.getFD());
-		} catch (Exception e) {}
-		return bitmap;
+		else {
+			Arrays.sort(files, new Comparator<File>(){
+				public int compare(File f1, File f2) {
+					return Long.valueOf(f2.lastModified())
+						.compareTo(f1.lastModified());
+				}
+			});
+		}
+		return files;
 	}
 
 	private void deleteOldVideos(boolean force) {
-		// Get all the files in the directory and sort by last modified.
-		File[] files = getOutputDir().listFiles();
-		Arrays.sort(files, new Comparator<File>(){
-			public int compare(File f1, File f2) {
-				return Long.valueOf(f1.lastModified())
-					.compareTo(f2.lastModified());
-			}
-		});
+		// Get all the files in the directory and sort in ascending order.
+		File[] files = getFiles(true);
 
 		// Get their durations and delete if necessary.
 		if (files.length > 0) {
 			long[] durations = new long[files.length];
 			long totalDuration = 0;
 			for (int i = 0; i < files.length; i++) {
-				File thumb = getThumbnailFile(files[i]);
-				if (!thumb.exists()) {
-					saveThumbnail(files[i]);
-				}
-
 				try {
 					MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 					FileInputStream fis = new FileInputStream(files[i]);
@@ -236,9 +212,6 @@ public class BabaRamCamera extends SurfaceView
 					totalDuration += Long.parseLong(duration);
 				} catch (Exception e) {
 					files[i].delete();
-					if (thumb.exists()) {
-						thumb.delete();
-					}
 				}
 			}
 
@@ -258,32 +231,6 @@ public class BabaRamCamera extends SurfaceView
 				files[i].delete();
 			}
 		}
-	}
-
-	public static File getThumbnailFile(File videoFile) {
-		File dir = getThumbsDir();
-		if (!dir.exists()) {
-			if (!dir.mkdirs()) {
-				return null;
-			}
-		}
-
-		int index = videoFile.getName().lastIndexOf(".");
-		String name = videoFile.getName();
-		File output = new File(
-			dir, (index > 0 ? name.substring(0, index) : name) + JPG
-		);
-		return output;
-	}
-
-	public static File getVideoFile(File thumbFile) {
-		File dir = getOutputDir();
-		int index = thumbFile.getName().lastIndexOf(".");
-		String name = thumbFile.getName();
-		File output = new File(
-			dir, (index > 0 ? name.substring(0, index) : name) + MP4
-		);
-		return output;
 	}
 
 	private int getCameraOrientation(boolean display) {
@@ -318,13 +265,6 @@ public class BabaRamCamera extends SurfaceView
 		return new File(
 			Environment.getExternalStorageDirectory(),
 			"BabaRam"
-		);
-	}
-
-	public static File getThumbsDir() {
-		return new File(
-			Environment.getExternalStorageDirectory(),
-			"BabaRam" + File.separator + "thumbs"
 		);
 	}
 

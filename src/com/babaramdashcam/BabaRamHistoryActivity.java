@@ -23,9 +23,8 @@ public class BabaRamHistoryActivity extends Activity {
 			public void onItemClick
 				(AdapterView<?> parent, View v, int position, long id)
 			{
-				File thumb = ((BabaRamImageAdapter) parent.getAdapter())
+				File video = ((BabaRamImageAdapter) parent.getAdapter())
 					.getItem(position);
-				File video = BabaRamCamera.getVideoFile(thumb);
 
 				Intent playVideo = new Intent(Intent.ACTION_VIEW);
 				playVideo.setDataAndType(Uri.fromFile(video), "video/*");
