@@ -9,9 +9,12 @@ import android.hardware.Camera;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
+import android.media.ThumbnailUtils;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
+import android.graphics.Bitmap;
+import android.provider.MediaStore;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,6 +22,7 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.Exception;
 
 public class BabaRamCamera extends SurfaceView
@@ -183,6 +187,11 @@ public class BabaRamCamera extends SurfaceView
 			long[] durations = new long[files.length];
 			long totalDuration = 0;
 			for (int i = 0; i < files.length; i++) {
+				File thumb = getThumbnailFile(files[i]);
+				if (!thumb.exists()) {
+					saveThumbnail(files[i]);
+				}
+
 				try {
 					MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 					FileInputStream fis = new FileInputStream(files[i]);
@@ -195,6 +204,9 @@ public class BabaRamCamera extends SurfaceView
 					totalDuration += Long.parseLong(duration);
 				} catch (Exception e) {
 					files[i].delete();
+					if (thumb.exists()) {
+						thumb.delete();
+					}
 				}
 			}
 
@@ -214,6 +226,42 @@ public class BabaRamCamera extends SurfaceView
 				files[i].delete();
 			}
 		}
+	}
+
+	private void saveThumbnail(File file) {
+		File output = getThumbnailFile(file);
+		if (output == null) {
+			return;
+		}
+
+		Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
+			file.toString(),
+			MediaStore.Video.Thumbnails.MINI_KIND
+		);
+
+		try {
+			FileOutputStream out = new FileOutputStream(output);
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+			out.flush();
+			out.close();
+		} catch (Exception e) {}
+	}
+
+	private File getThumbnailFile(File file) {
+		File thumbsDir = getThumbsDir();
+		if (!thumbsDir.exists()) {
+			if (!thumbsDir.mkdirs()) {
+				return null;
+			}
+		}
+
+		int index = file.getName().lastIndexOf(".");
+		File output = new File(
+			thumbsDir,
+			(index > 0 ? file.getName().substring(0, index) : file.getName()) +
+			".jpg"
+		);
+		return output;
 	}
 
 	private int getCameraOrientation(boolean display) {
@@ -244,16 +292,22 @@ public class BabaRamCamera extends SurfaceView
 		return result;
 	}
 
-	private File getOutputDir() {
+	public static File getOutputDir() {
 		return new File(
 			Environment.getExternalStorageDirectory(),
 			"BabaRam"
 		);
 	}
 
+	public static File getThumbsDir() {
+		return new File(
+			Environment.getExternalStorageDirectory(),
+			"BabaRam" + File.separator + "thumbs"
+		);
+	}
+
 	private File getOutputFile() {
 		File mediaStorageDir = getOutputDir();
-
 		if (!mediaStorageDir.exists()) {
 			if (!mediaStorageDir.mkdirs()) {
 				return null;
@@ -262,9 +316,7 @@ public class BabaRamCamera extends SurfaceView
 
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
 			.format(new Date());
-		File mediaFile = new File(
-			mediaStorageDir.getPath() + File.separator + timeStamp + ".mp4"
-		);
+		File mediaFile = new File(mediaStorageDir, timeStamp + ".mp4");
 
 		return mediaFile;
 	}

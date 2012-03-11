@@ -11,10 +11,10 @@ public class BabaRamActivity extends Activity {
 	private BabaRamCamera mCamera;
 	private FrameLayout mLayout;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
 
 		// Create the camera view and begin recording.
 		mCamera = new BabaRamCamera(this, 0);
