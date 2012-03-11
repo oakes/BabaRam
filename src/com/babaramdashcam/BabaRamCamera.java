@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.provider.MediaStore;
 
 import java.util.Arrays;
@@ -29,6 +30,8 @@ public class BabaRamCamera extends SurfaceView
 	implements SurfaceHolder.Callback
 {
 	private static final String TAG = "BabaRamCamera";
+	private static final String JPG = ".jpg";
+	private static final String MP4 = ".mp4";
 	private static final int MAXDURATION = 1200000;
 	private static final int MAXHISTORY = 3600000;
 	private Camera mCamera = null;
@@ -49,12 +52,12 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-		deleteOldVideos(false);
 		start();
 	}
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		stop();
+		deleteOldVideos(false);
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
@@ -164,12 +167,41 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public void flip() {
-		if (Camera.getNumberOfCameras() < 2)
+		if (Camera.getNumberOfCameras() < 2) {
 			return;
+		}
 
 		mCameraId = (mCameraId == 0) ? 1 : 0;
 		stop();
 		start();
+	}
+
+	public static void saveThumbnail(File file) {
+		File output = getThumbnailFile(file);
+		if (output == null) {
+			return;
+		}
+
+		Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
+			file.toString(),
+			MediaStore.Video.Thumbnails.MINI_KIND
+		);
+
+		try {
+			FileOutputStream out = new FileOutputStream(output);
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+			out.flush();
+			out.close();
+		} catch (Exception e) {}
+	}
+
+	public static Bitmap readThumbnail(File file) {
+		Bitmap bitmap = null;
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			bitmap = BitmapFactory.decodeFileDescriptor(fis.getFD());
+		} catch (Exception e) {}
+		return bitmap;
 	}
 
 	private void deleteOldVideos(boolean force) {
@@ -228,38 +260,28 @@ public class BabaRamCamera extends SurfaceView
 		}
 	}
 
-	private void saveThumbnail(File file) {
-		File output = getThumbnailFile(file);
-		if (output == null) {
-			return;
-		}
-
-		Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(
-			file.toString(),
-			MediaStore.Video.Thumbnails.MINI_KIND
-		);
-
-		try {
-			FileOutputStream out = new FileOutputStream(output);
-			bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-			out.flush();
-			out.close();
-		} catch (Exception e) {}
-	}
-
-	private File getThumbnailFile(File file) {
-		File thumbsDir = getThumbsDir();
-		if (!thumbsDir.exists()) {
-			if (!thumbsDir.mkdirs()) {
+	public static File getThumbnailFile(File videoFile) {
+		File dir = getThumbsDir();
+		if (!dir.exists()) {
+			if (!dir.mkdirs()) {
 				return null;
 			}
 		}
 
-		int index = file.getName().lastIndexOf(".");
+		int index = videoFile.getName().lastIndexOf(".");
+		String name = videoFile.getName();
 		File output = new File(
-			thumbsDir,
-			(index > 0 ? file.getName().substring(0, index) : file.getName()) +
-			".jpg"
+			dir, (index > 0 ? name.substring(0, index) : name) + JPG
+		);
+		return output;
+	}
+
+	public static File getVideoFile(File thumbFile) {
+		File dir = getOutputDir();
+		int index = thumbFile.getName().lastIndexOf(".");
+		String name = thumbFile.getName();
+		File output = new File(
+			dir, (index > 0 ? name.substring(0, index) : name) + MP4
 		);
 		return output;
 	}
@@ -316,7 +338,7 @@ public class BabaRamCamera extends SurfaceView
 
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
 			.format(new Date());
-		File mediaFile = new File(mediaStorageDir, timeStamp + ".mp4");
+		File mediaFile = new File(mediaStorageDir, timeStamp + MP4);
 
 		return mediaFile;
 	}

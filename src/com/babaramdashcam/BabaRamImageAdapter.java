@@ -7,10 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 
 public class BabaRamImageAdapter extends BaseAdapter {
 	private Context mContext;
@@ -23,8 +21,8 @@ public class BabaRamImageAdapter extends BaseAdapter {
 		return BabaRamCamera.getThumbsDir().listFiles().length;
 	}
 
-	public Object getItem(int position) {
-		return null;
+	public File getItem(int position) {
+		return BabaRamCamera.getThumbsDir().listFiles()[position];
 	}
 
 	public long getItemId(int position) {
@@ -44,7 +42,7 @@ public class BabaRamImageAdapter extends BaseAdapter {
 
 		try {
 			File file = BabaRamCamera.getThumbsDir().listFiles()[position];
-			Bitmap bitmap = readThumbnail(file);
+			Bitmap bitmap = BabaRamCamera.readThumbnail(file);
 			if (bitmap != null) {
 				imageView.setImageBitmap(bitmap);
 			}
@@ -52,15 +50,4 @@ public class BabaRamImageAdapter extends BaseAdapter {
 
 		return imageView;
 	}
-
-	private Bitmap readThumbnail(File file) {
-		Bitmap bitmap = null;
-		try {
-			FileInputStream fis = new FileInputStream(file);
-			bitmap = BitmapFactory.decodeFileDescriptor(fis.getFD());
-		} catch (Exception e) {}
-
-		return bitmap;
-	}
-
 }
