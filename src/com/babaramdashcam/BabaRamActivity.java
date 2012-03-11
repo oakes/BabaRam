@@ -6,6 +6,7 @@ import android.widget.FrameLayout;
 import android.widget.Button;
 import android.view.View;
 import android.content.Intent;
+import android.net.Uri;
 
 public class BabaRamActivity extends Activity {
 	private BabaRamCamera mCamera;
@@ -22,10 +23,10 @@ public class BabaRamActivity extends Activity {
 		mLayout.addView(mCamera);
 
 		// Bind actions to the buttons.
-		Button historyBtn = (Button) findViewById(R.id.history_button);
-		historyBtn.setOnClickListener(new View.OnClickListener() {
+		Button galleryBtn = (Button) findViewById(R.id.gallery_button);
+		galleryBtn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				goToHistory();
+				goToGallery();
 			}
 		});
 		Button flipBtn = (Button) findViewById(R.id.flip_button);
@@ -36,8 +37,9 @@ public class BabaRamActivity extends Activity {
 		});
     }
 
-	public void goToHistory() {
-		Intent intent = new Intent(this, BabaRamHistoryActivity.class);
+	public void goToGallery() {
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.setData(Uri.parse("content://media/external/images/media"));
 		startActivity(intent);
 	}
 }

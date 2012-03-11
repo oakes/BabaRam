@@ -10,8 +10,11 @@ import android.os.Environment;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.util.Log;
 import android.widget.Toast;
+import android.net.Uri;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -210,6 +213,8 @@ public class BabaRamCamera extends SurfaceView
 
 					durations[i] = Long.parseLong(duration);
 					totalDuration += Long.parseLong(duration);
+
+					new SingleMediaScanner(mAct, files[i]);
 				} catch (Exception e) {
 					files[i].delete();
 				}
@@ -281,5 +286,24 @@ public class BabaRamCamera extends SurfaceView
 		File mediaFile = new File(mediaStorageDir, timeStamp + MP4);
 
 		return mediaFile;
+	}
+
+	private class SingleMediaScanner implements MediaScannerConnectionClient {
+		private MediaScannerConnection mConn;
+		private File mFile;
+
+		public SingleMediaScanner(Context context, File f) {
+			mFile = f;
+			mConn = new MediaScannerConnection(context, this);
+			mConn.connect();
+		}
+
+		public void onMediaScannerConnected() {
+			mConn.scanFile(mFile.getAbsolutePath(), null);
+		}
+
+		public void onScanCompleted(String path, Uri uri) {
+			mConn.disconnect();
+		}
 	}
 }

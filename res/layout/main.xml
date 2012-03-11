@@ -16,8 +16,8 @@
 		android:layout_width="fill_parent"
 		android:layout_gravity="bottom" >
 	<Button
-		android:id="@+id/history_button"
-		android:text="@string/history"
+		android:id="@+id/gallery_button"
+		android:text="@string/gallery"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:layout_alignParentLeft="true" />
