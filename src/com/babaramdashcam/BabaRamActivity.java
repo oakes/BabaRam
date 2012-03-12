@@ -3,7 +3,7 @@ package com.babaramdashcam;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.FrameLayout;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.view.View;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,13 +23,14 @@ public class BabaRamActivity extends Activity {
 		mLayout.addView(mCamera);
 
 		// Bind actions to the buttons.
-		Button galleryBtn = (Button) findViewById(R.id.gallery_button);
+		ImageButton galleryBtn =
+			(ImageButton) findViewById(R.id.gallery_button);
 		galleryBtn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				goToGallery();
 			}
 		});
-		Button flipBtn = (Button) findViewById(R.id.flip_button);
+		ImageButton flipBtn = (ImageButton) findViewById(R.id.flip_button);
 		flipBtn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				mCamera.flip();

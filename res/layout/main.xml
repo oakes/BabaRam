@@ -15,17 +15,21 @@
 		android:layout_height="wrap_content"
 		android:layout_width="fill_parent"
 		android:layout_gravity="bottom" >
-	<Button
+	<ImageButton
 		android:id="@+id/gallery_button"
-		android:text="@string/gallery"
+		android:src="@drawable/ic_menu_gallery"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
+		android:background="@null"
+		android:padding="8dp"
 		android:layout_alignParentLeft="true" />
-	<Button
+	<ImageButton
 		android:id="@+id/flip_button"
-		android:text="@string/flip"
+		android:src="@drawable/ic_switch_photo_facing_holo_light"
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
+		android:background="@null"
+		android:padding="8dp"
 		android:layout_alignParentRight="true" />
 	</RelativeLayout>
 
