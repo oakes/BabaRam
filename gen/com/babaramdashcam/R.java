@@ -28,5 +28,6 @@ public final class R {
         public static final int camera_error=0x7f040003;
         public static final int flip=0x7f040002;
         public static final int gallery=0x7f040001;
+        public static final int too_short=0x7f040004;
     }
 }

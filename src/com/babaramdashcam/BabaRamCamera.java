@@ -30,6 +30,7 @@ public class BabaRamCamera extends SurfaceView
 	private static final String TAG = "BabaRamCamera";
 	private static final String MP4 = ".mp4";
 	private static final int MAXDURATION = 1200000;
+	private static final int MINDURATION = 5000;
 	private static final int MAXHISTORY = 3600000;
 	private Camera mCamera = null;
 	private MediaRecorder mRecorder = null;
@@ -198,10 +199,13 @@ public class BabaRamCamera extends SurfaceView
 		// Get all the files in the directory and sort in ascending order.
 		File[] files = getFiles(true);
 
-		// Get their durations and delete if necessary.
+		// Delete files if necessary.
 		if (files.length > 0) {
 			long[] durations = new long[files.length];
 			long totalDuration = 0;
+			boolean tooShort = false;
+
+			// Get the duration of each file.
 			for (int i = 0; i < files.length; i++) {
 				try {
 					MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -213,13 +217,33 @@ public class BabaRamCamera extends SurfaceView
 
 					durations[i] = Long.parseLong(duration);
 					totalDuration += Long.parseLong(duration);
-
-					new SingleMediaScanner(mAct, files[i]);
 				} catch (Exception e) {
 					files[i].delete();
 				}
+
+				// Delete the file if it is too short.
+				// Otherwise, make sure it appears in the gallery.
+				if (files[i].exists()) {
+					if (durations[i] < MINDURATION) {
+						files[i].delete();
+						tooShort = true;
+					}
+					else {
+						new SingleMediaScanner(mAct, files[i]);
+					}
+				}
 			}
 
+			// Alert the user if a video was deleted for being too short.
+			if (tooShort) {
+				Toast.makeText(
+					mAct,
+					getResources().getString(R.string.too_short),
+					Toast.LENGTH_SHORT
+				).show();
+			}
+
+			// Find out how many videos we need to delete.
 			int deleteCount = 0;
 			for (int i = 0; i < files.length; i++) {
 				if (totalDuration > MAXHISTORY) {
@@ -227,13 +251,15 @@ public class BabaRamCamera extends SurfaceView
 					deleteCount++;
 				}
 			}
-
 			if (deleteCount == 0 && force) {
 				deleteCount = 1;
 			}
 
+			// Delete old videos if necessary.
 			for (int i = 0; i < deleteCount; i++) {
-				files[i].delete();
+				if (files[i].exists()) {
+					files[i].delete();
+				}
 			}
 		}
 	}
