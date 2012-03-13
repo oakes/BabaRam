@@ -7,6 +7,7 @@ import android.view.SurfaceHolder;
 import android.content.Context;
 import android.hardware.Camera;
 import android.os.Environment;
+import android.os.StatFs;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
@@ -32,6 +33,7 @@ public class BabaRamCamera extends SurfaceView
 	private static final int MAXDURATION = 1200000;
 	private static final int MINDURATION = 5000;
 	private static final int MAXHISTORY = 3600000;
+	private static final long MINFREE = 100 * 1024 * 1024;
 	private Camera mCamera = null;
 	private MediaRecorder mRecorder = null;
 	private Activity mAct;
@@ -50,12 +52,13 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
+		deleteOldVideos();
 		start();
 	}
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		stop();
-		deleteOldVideos(false);
+		deleteOldVideos();
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
@@ -70,10 +73,8 @@ public class BabaRamCamera extends SurfaceView
 				mCamera.setDisplayOrientation(getCameraOrientation(true));
 				mCamera.unlock();
 			} catch (Exception e) {
-				Log.d(TAG, "Camera start: " + e.getMessage());
 				stop();
-				Toast.makeText(
-					mAct,
+				Toast.makeText(mAct,
 					getResources().getString(R.string.camera_error),
 					Toast.LENGTH_SHORT
 				).show();
@@ -112,7 +113,7 @@ public class BabaRamCamera extends SurfaceView
 							MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
 						{
 							stop();
-							deleteOldVideos(false);
+							deleteOldVideos();
 							start();
 						}
 					}
@@ -122,7 +123,7 @@ public class BabaRamCamera extends SurfaceView
 				new MediaRecorder.OnErrorListener() {
 					public void onError(MediaRecorder mr, int w, int ex) {
 						stop();
-						deleteOldVideos(true);
+						deleteOldVideos();
 						start();
 					}
 				}
@@ -195,73 +196,84 @@ public class BabaRamCamera extends SurfaceView
 		return files;
 	}
 
-	private void deleteOldVideos(boolean force) {
+	private void deleteOldVideos() {
 		// Get all the files in the directory and sort in ascending order.
 		File[] files = getFiles(true);
+		if (files.length == 0) {
+			return;
+		}
 
-		// Delete files if necessary.
-		if (files.length > 0) {
-			long[] durations = new long[files.length];
-			long totalDuration = 0;
-			boolean tooShort = false;
+		long[] durations = new long[files.length];
+		long totalDuration = 0;
+		boolean tooShort = false;
 
-			// Get the duration of each file.
-			for (int i = 0; i < files.length; i++) {
-				try {
-					MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-					FileInputStream fis = new FileInputStream(files[i]);
-					mmr.setDataSource(fis.getFD());
-					String duration = mmr.extractMetadata(
-						MediaMetadataRetriever.METADATA_KEY_DURATION
-					);
+		// Get the duration of each file.
+		for (int i = 0; i < files.length; i++) {
+			try {
+				MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+				FileInputStream fis = new FileInputStream(files[i]);
+				mmr.setDataSource(fis.getFD());
+				String duration = mmr.extractMetadata(
+					MediaMetadataRetriever.METADATA_KEY_DURATION
+				);
 
-					durations[i] = Long.parseLong(duration);
-					totalDuration += Long.parseLong(duration);
-				} catch (Exception e) {
+				durations[i] = Long.parseLong(duration);
+				totalDuration += Long.parseLong(duration);
+			} catch (Exception e) {
+				files[i].delete();
+			}
+
+			// Delete the file if it is too short.
+			// Otherwise, make sure it appears in the gallery.
+			if (files[i].exists()) {
+				if (durations[i] < MINDURATION) {
 					files[i].delete();
+					tooShort = true;
 				}
-
-				// Delete the file if it is too short.
-				// Otherwise, make sure it appears in the gallery.
-				if (files[i].exists()) {
-					if (durations[i] < MINDURATION) {
-						files[i].delete();
-						tooShort = true;
-					}
-					else {
-						new SingleMediaScanner(mAct, files[i]);
-					}
-				}
-			}
-
-			// Alert the user if a video was deleted for being too short.
-			if (tooShort) {
-				Toast.makeText(
-					mAct,
-					getResources().getString(R.string.too_short),
-					Toast.LENGTH_SHORT
-				).show();
-			}
-
-			// Find out how many videos we need to delete.
-			int deleteCount = 0;
-			for (int i = 0; i < files.length; i++) {
-				if (totalDuration > MAXHISTORY) {
-					totalDuration -= durations[i];
-					deleteCount++;
-				}
-			}
-			if (deleteCount == 0 && force) {
-				deleteCount = 1;
-			}
-
-			// Delete old videos if necessary.
-			for (int i = 0; i < deleteCount; i++) {
-				if (files[i].exists()) {
-					files[i].delete();
+				else {
+					new SingleMediaScanner(mAct, files[i]);
 				}
 			}
 		}
+
+		// Find out how many videos we need to delete.
+		int deleteCount = 0;
+		for (int i = 0; i < files.length; i++) {
+			if (totalDuration > MAXHISTORY) {
+				totalDuration -= durations[i];
+				deleteCount++;
+			}
+		}
+
+		// Delete old videos if necessary.
+		for (int i = 0; i < deleteCount; i++) {
+			if (files[i].exists()) {
+				files[i].delete();
+			}
+		}
+
+		// Alert the user if a video was deleted for being too short.
+		if (tooShort) {
+			Toast.makeText(mAct,
+				getResources().getString(R.string.too_short),
+				Toast.LENGTH_SHORT
+			).show();
+		}
+
+		// Alert the user if there is still not very much space.
+		else if (getFreeSpace() < MINFREE) {
+			Toast.makeText(mAct,
+				getResources().getString(R.string.free_space),
+				Toast.LENGTH_SHORT
+			).show();
+		}
+	}
+
+	private long getFreeSpace() {
+		StatFs stat = new StatFs(
+			Environment.getExternalStorageDirectory().getPath()
+		);
+		return (long)stat.getBlockSize() * (long)stat.getAvailableBlocks();
 	}
 
 	private int getCameraOrientation(boolean display) {
