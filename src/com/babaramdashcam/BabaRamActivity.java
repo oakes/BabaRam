@@ -36,7 +36,7 @@ public class BabaRamActivity extends Activity {
 				mCamera.flip();
 			}
 		});
-    }
+	}
 
 	public void goToGallery() {
 		Intent intent = new Intent(Intent.ACTION_VIEW);

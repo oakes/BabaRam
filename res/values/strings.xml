@@ -5,7 +5,7 @@
 	<string name="gallery">Gallery</string>
 	<string name="flip">Flip</string>
 	<string name="camera_error">Camera couldn\'t start</string>
-	<string name="too_short">Short video wasn\'t saved</string>
+	<string name="too_short">Video was too short</string>
 	<string name="free_space">Not enough free space</string>
 
 </resources>

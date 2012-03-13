@@ -68,10 +68,8 @@ public class BabaRamCamera extends SurfaceView
 		if (mCamera == null) {
 			try {
 				mCamera = Camera.open(mCameraId);
-				mCamera.setPreviewDisplay(mHolder);
-				mCamera.startPreview();
-				mCamera.setDisplayOrientation(getCameraOrientation(true));
-				mCamera.unlock();
+				//mCamera.setPreviewDisplay(mHolder);
+				//mCamera.startPreview();
 			} catch (Exception e) {
 				stop();
 				Toast.makeText(mAct,
@@ -80,6 +78,12 @@ public class BabaRamCamera extends SurfaceView
 				).show();
 				return;
 			}
+
+			try {
+				mCamera.setDisplayOrientation(getCameraOrientation(true));
+			} catch (Exception e) {}
+
+			mCamera.unlock();
 		}
 
 		startRecorder();
@@ -145,8 +149,8 @@ public class BabaRamCamera extends SurfaceView
 
 		if (mCamera != null) {
 			mCamera.lock();
-			mCamera.stopPreview();
-			mCamera.setPreviewCallback(null);
+			//mCamera.stopPreview();
+			//mCamera.setPreviewCallback(null);
 			mCamera.release();
 			mCamera = null;
 		}
@@ -305,24 +309,23 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public static File getOutputDir() {
-		return new File(
+		File mediaStorageDir = new File(
 			Environment.getExternalStorageDirectory(),
 			"BabaRam"
 		);
-	}
-
-	private File getOutputFile() {
-		File mediaStorageDir = getOutputDir();
 		if (!mediaStorageDir.exists()) {
 			if (!mediaStorageDir.mkdirs()) {
 				return null;
 			}
 		}
+		return mediaStorageDir;
+	}
 
+	private File getOutputFile() {
+		File mediaStorageDir = getOutputDir();
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
 			.format(new Date());
 		File mediaFile = new File(mediaStorageDir, timeStamp + MP4);
-
 		return mediaFile;
 	}
 
