@@ -30,10 +30,9 @@ public class BabaRamCamera extends SurfaceView
 {
 	private static final String TAG = "BabaRamCamera";
 	private static final String MP4 = ".mp4";
-	private static final int MAXDURATION = 1200000;
+	private static final int MAXFILESIZE = 100 * 1000 * 1024;
+	private static final int MAXHISTORY = 1000 * 1000 * 1024;
 	private static final int MINDURATION = 5000;
-	private static final int MAXHISTORY = 3600000;
-	private static final long MINFREE = 100 * 1024 * 1024;
 	private Camera mCamera = null;
 	private MediaRecorder mRecorder = null;
 	private Activity mAct;
@@ -68,8 +67,6 @@ public class BabaRamCamera extends SurfaceView
 		if (mCamera == null) {
 			try {
 				mCamera = Camera.open(mCameraId);
-				//mCamera.setPreviewDisplay(mHolder);
-				//mCamera.startPreview();
 			} catch (Exception e) {
 				stop();
 				Toast.makeText(mAct,
@@ -109,12 +106,12 @@ public class BabaRamCamera extends SurfaceView
 			mRecorder.setOrientationHint(getCameraOrientation(false));
 			mRecorder.setOutputFile(getOutputFile().toString());
 			mRecorder.setPreviewDisplay(mHolder.getSurface());
-			mRecorder.setMaxDuration(MAXDURATION);
+			mRecorder.setMaxFileSize(MAXFILESIZE);
 			mRecorder.setOnInfoListener(
 				new MediaRecorder.OnInfoListener() {
 					public void onInfo(MediaRecorder mr, int w, int ex) {
 						if (w == MediaRecorder.
-							MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
+							MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED)
 						{
 							stop();
 							deleteOldVideos();
@@ -149,8 +146,6 @@ public class BabaRamCamera extends SurfaceView
 
 		if (mCamera != null) {
 			mCamera.lock();
-			//mCamera.stopPreview();
-			//mCamera.setPreviewCallback(null);
 			mCamera.release();
 			mCamera = null;
 		}
@@ -207,13 +202,11 @@ public class BabaRamCamera extends SurfaceView
 			return;
 		}
 
-		long[] durations = new long[files.length];
-		long totalDuration = 0;
-		boolean tooShort = false;
-
-		// Get the duration of each file.
+		// Iterate over each file.
+		long totalFileSize = 0;
 		for (int i = 0; i < files.length; i++) {
 			try {
+				// Get the duration of this video.
 				MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 				FileInputStream fis = new FileInputStream(files[i]);
 				mmr.setDataSource(fis.getFD());
@@ -221,55 +214,34 @@ public class BabaRamCamera extends SurfaceView
 					MediaMetadataRetriever.METADATA_KEY_DURATION
 				);
 
-				durations[i] = Long.parseLong(duration);
-				totalDuration += Long.parseLong(duration);
+				// Delete file if it's too short, and alert the user.
+				if (Long.parseLong(duration) <= MINDURATION) {
+					files[i].delete();
+					Toast.makeText(mAct,
+						getResources().getString(R.string.too_short),
+						Toast.LENGTH_SHORT
+					).show();
+				}
+
+				// Otherwise, refresh the gallery so it gets the thumbnail.
+				else {
+					new SingleMediaScanner(mAct, files[i]);
+					totalFileSize += files[i].length();
+				}
 			} catch (Exception e) {
 				files[i].delete();
 			}
-
-			// Delete the file if it is too short.
-			// Otherwise, make sure it appears in the gallery.
-			if (files[i].exists()) {
-				if (durations[i] < MINDURATION) {
-					files[i].delete();
-					tooShort = true;
-				}
-				else {
-					new SingleMediaScanner(mAct, files[i]);
-				}
-			}
 		}
 
-		// Find out how many videos we need to delete.
-		int deleteCount = 0;
+		// Delete videos until if they're taking up too much space.
 		for (int i = 0; i < files.length; i++) {
-			if (totalDuration > MAXHISTORY) {
-				totalDuration -= durations[i];
-				deleteCount++;
+			if (getFreeSpace() >= MAXFILESIZE && totalFileSize < MAXHISTORY) {
+				 break;
 			}
-		}
-
-		// Delete old videos if necessary.
-		for (int i = 0; i < deleteCount; i++) {
 			if (files[i].exists()) {
+				totalFileSize -= files[i].length();
 				files[i].delete();
 			}
-		}
-
-		// Alert the user if a video was deleted for being too short.
-		if (tooShort) {
-			Toast.makeText(mAct,
-				getResources().getString(R.string.too_short),
-				Toast.LENGTH_SHORT
-			).show();
-		}
-
-		// Alert the user if there is still not very much space.
-		else if (getFreeSpace() < MINFREE) {
-			Toast.makeText(mAct,
-				getResources().getString(R.string.free_space),
-				Toast.LENGTH_SHORT
-			).show();
 		}
 	}
 
