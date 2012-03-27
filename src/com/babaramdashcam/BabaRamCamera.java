@@ -223,9 +223,8 @@ public class BabaRamCamera extends SurfaceView
 					).show();
 				}
 
-				// Otherwise, refresh the gallery so it gets the thumbnail.
+				// Otherwise, add the file size to the total.
 				else {
-					new SingleMediaScanner(mAct, files[i]);
 					totalFileSize += files[i].length();
 				}
 			} catch (Exception e) {
@@ -233,7 +232,7 @@ public class BabaRamCamera extends SurfaceView
 			}
 		}
 
-		// Delete videos until if they're taking up too much space.
+		// Delete videos if they're taking up too much space.
 		for (int i = 0; i < files.length; i++) {
 			if (getFreeSpace() >= MAXFILESIZE && totalFileSize < MAXHISTORY) {
 				 break;
@@ -241,6 +240,13 @@ public class BabaRamCamera extends SurfaceView
 			if (files[i].exists()) {
 				totalFileSize -= files[i].length();
 				files[i].delete();
+			}
+		}
+
+		// Refresh the gallery to make sure it is accurately reflected.
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].exists()) {
+				new SingleMediaScanner(mAct, files[i]);
 			}
 		}
 	}
