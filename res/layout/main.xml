@@ -30,6 +30,14 @@
 		android:layout_width="wrap_content"
 		android:background="@null"
 		android:padding="8dp"
+		android:layout_centerHorizontal="true" />
+	<ImageButton
+		android:id="@+id/storage_button"
+		android:src="@drawable/ic_dialog_time"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:background="@null"
+		android:padding="8dp"
 		android:layout_alignParentRight="true" />
 	</RelativeLayout>
 

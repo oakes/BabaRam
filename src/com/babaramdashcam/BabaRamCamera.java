@@ -5,6 +5,7 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Camera;
 import android.os.Environment;
 import android.os.StatFs;
@@ -30,8 +31,7 @@ public class BabaRamCamera extends SurfaceView
 {
 	private static final String TAG = "BabaRamCamera";
 	private static final String MP4 = ".mp4";
-	private static final int MAXFILESIZE = 100 * 1000 * 1024;
-	private static final int MAXHISTORY = 1000 * 1000 * 1024;
+	private static final long MAXFILESIZE = 100 * 1000 * 1024;
 	private static final int MINDURATION = 5000;
 	private Camera mCamera = null;
 	private MediaRecorder mRecorder = null;
@@ -175,7 +175,12 @@ public class BabaRamCamera extends SurfaceView
 	}
 
 	public static File[] getFiles(boolean isAscending) {
-		File[] files = getOutputDir().listFiles();
+		File dir = getOutputDir();
+		if (dir == null) {
+			return null;
+		}
+
+		File[] files = dir.listFiles();
 		if (isAscending) {
 			Arrays.sort(files, new Comparator<File>(){
 				public int compare(File f1, File f2) {
@@ -198,7 +203,7 @@ public class BabaRamCamera extends SurfaceView
 	private void deleteOldVideos() {
 		// Get all the files in the directory and sort in ascending order.
 		File[] files = getFiles(true);
-		if (files.length == 0) {
+		if (files == null || files.length == 0) {
 			return;
 		}
 
@@ -232,14 +237,28 @@ public class BabaRamCamera extends SurfaceView
 			}
 		}
 
-		// Delete videos if they're taking up too much space.
-		for (int i = 0; i < files.length; i++) {
-			if (getFreeSpace() >= MAXFILESIZE && totalFileSize < MAXHISTORY) {
-				 break;
+		// Delete a video if there isn't much free space left.
+		if (getFreeSpace() < MAXFILESIZE) {
+			for (int i = 0; i < files.length; i++) {
+				if (files[i].exists()) {
+					totalFileSize -= files[i].length();
+					files[i].delete();
+					break;
+				}
 			}
-			if (files[i].exists()) {
-				totalFileSize -= files[i].length();
-				files[i].delete();
+		}
+
+		// Delete one or more videos if we've exceeded our max storage size.
+		SharedPreferences sp = mAct.getPreferences(Context.MODE_PRIVATE);
+		int maxHistory = sp.getInt("maxHistory", 500);
+		if (maxHistory >= 0) {
+			for (int i = 0; i < files.length; i++) {
+				if (totalFileSize >= (maxHistory * 1000 * 1024)) {
+					if (files[i].exists()) {
+						totalFileSize -= files[i].length();
+						files[i].delete();
+					}
+				}
 			}
 		}
 

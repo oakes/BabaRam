@@ -8,4 +8,12 @@
 	<string name="too_short">Video was too short</string>
 	<string name="free_space">Not enough free space</string>
 
+	<string name="how_much_to_store">How much to store</string>
+	<string name="infinite">Use all space</string>
+	<string name="one_thousand">1 GB</string>
+	<string name="seven_fifty">750 MB</string>
+	<string name="five_hundred">500 MB</string>
+	<string name="two_fifty">250 MB</string>
+	<string name="one_hundred">100 MB</string>
+
 </resources>
